@@ -1,200 +1,1334 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Assistant Immo - Jade</title>
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        .active-tab { border-top: 4px solid #3b82f6; color: #3b82f6; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-    </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>Assistant Immo</title>
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet"/>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+  :root {
+    --primary: #1a73e8;
+    --primary-dark: #1557b0;
+    --gold: #C9A84C;
+    --dark: #121212;
+    --dark2: #1E1E1E;
+    --dark3: #2A2A2A;
+    --text: #FFFFFF;
+    --text-muted: #888888;
+    --green: #4CAF50;
+    --orange: #FF9800;
+    --surface: #1E1E2E;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'Roboto', sans-serif;
+    background: var(--dark);
+    color: var(--text);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  /* LOGIN SCREEN */
+  #login-screen {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    background: linear-gradient(160deg, #0F1923 0%, #1a1f2e 100%);
+  }
+
+  .login-logo {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, var(--gold), #8B6914);
+    border-radius: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+    margin-bottom: 24px;
+    box-shadow: 0 8px 32px rgba(201,168,76,0.3);
+  }
+
+  .login-title {
+    font-family: 'Google Sans', sans-serif;
+    font-size: 28px;
+    color: var(--gold);
+    margin-bottom: 8px;
+    text-align: center;
+  }
+
+  .login-sub {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-bottom: 48px;
+    text-align: center;
+  }
+
+  #google-signin-btn {
+    background: white;
+    color: #333;
+    border: none;
+    border-radius: 24px;
+    padding: 14px 28px;
+    font-size: 16px;
+    font-family: 'Google Sans', sans-serif;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  #google-signin-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  }
+
+  .google-icon { width: 20px; height: 20px; }
+
+  /* APP CONTAINER */
+  #app { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+  #app.visible { display: flex; }
+
+  /* STATUS BAR */
+  .status-bar {
+    background: #1a1f2e;
+    padding: 10px 20px 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: #fff;
+    font-weight: 500;
+  }
+
+  #current-time { font-weight: 600; }
+
+  /* APP HEADER */
+  .app-header {
+    background: #1a1f2e;
+    padding: 8px 16px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .app-title {
+    font-family: 'Google Sans', sans-serif;
+    font-size: 18px;
+    color: #4FC3F7;
+    font-weight: 500;
+  }
+
+  .user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--gold);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--dark);
+    cursor: pointer;
+  }
+
+  /* SCREENS */
+  .screen { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+  .screen.active { display: flex; }
+
+  /* LOADING */
+  .loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    gap: 16px;
+    color: var(--text-muted);
+  }
+
+  .spinner {
+    width: 36px;
+    height: 36px;
+    border: 3px solid rgba(79,195,247,0.2);
+    border-top-color: #4FC3F7;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* SUIVI */
+  .list-container { flex: 1; overflow-y: auto; }
+  .list-container::-webkit-scrollbar { display: none; }
+
+  .search-bar {
+    padding: 10px 16px;
+    background: var(--dark2);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .search-input {
+    width: 100%;
+    background: var(--dark3);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    padding: 8px 16px;
+    color: var(--text);
+    font-size: 14px;
+    font-family: 'Roboto', sans-serif;
+    outline: none;
+  }
+
+  .search-input::placeholder { color: var(--text-muted); }
+
+  .client-item {
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: background 0.2s;
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  .client-item:active { background: rgba(255,255,255,0.04); }
+
+  .client-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4FC3F7, #1976D2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    font-weight: 700;
+    color: white;
+    flex-shrink: 0;
+  }
+
+  .client-info { flex: 1; min-width: 0; }
+  .client-name { font-size: 15px; color: #fff; font-weight: 500; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .client-sub { font-size: 12px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .badge {
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 10px;
+    font-weight: 500;
+    flex-shrink: 0;
+  }
+
+  .badge-cours { background: rgba(76,175,80,0.2); color: #81C784; }
+  .badge-compromis { background: rgba(255,152,0,0.2); color: #FFB74D; }
+  .badge-vendu { background: rgba(244,67,54,0.2); color: #EF9A9A; }
+  .badge-default { background: rgba(158,158,158,0.2); color: #aaa; }
+
+  /* CLIENT DETAIL */
+  #client-detail {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: var(--dark);
+    z-index: 100;
+    display: none;
+    flex-direction: column;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  #client-detail.open { display: flex; }
+
+  .detail-header {
+    background: #1a1f2e;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .back-btn {
+    background: none;
+    border: none;
+    color: #4FC3F7;
+    font-size: 22px;
+    cursor: pointer;
+    padding: 4px;
+  }
+
+  .detail-content { flex: 1; overflow-y: auto; padding: 16px; }
+  .detail-content::-webkit-scrollbar { display: none; }
+
+  .detail-card {
+    background: var(--dark2);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  .detail-card h3 {
+    font-size: 13px;
+    color: #4FC3F7;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+  }
+
+  .detail-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 14px;
+  }
+
+  .detail-row span:first-child { color: var(--text-muted); }
+  .detail-row span:last-child { color: var(--text); font-weight: 500; text-align: right; max-width: 60%; }
+
+  .action-buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .action-btn {
+    flex: 1;
+    padding: 12px;
+    border-radius: 10px;
+    border: none;
+    font-size: 13px;
+    font-family: 'Roboto', sans-serif;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    font-weight: 500;
+    transition: opacity 0.2s;
+  }
+
+  .action-btn:active { opacity: 0.7; }
+  .btn-call { background: rgba(76,175,80,0.2); color: #81C784; }
+  .btn-sms { background: rgba(79,195,247,0.2); color: #4FC3F7; }
+  .btn-mail { background: rgba(255,152,0,0.2); color: #FFB74D; }
+  .btn-relance { background: rgba(201,168,76,0.2); color: var(--gold); }
+  .btn-icon { font-size: 20px; }
+
+  .biens-match-title {
+    font-size: 13px;
+    color: #4FC3F7;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+  }
+
+  .bien-match-item {
+    background: var(--dark3);
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .bien-match-icon { font-size: 24px; }
+  .bien-match-info { flex: 1; }
+  .bien-match-title { font-size: 13px; color: #fff; font-weight: 500; }
+  .bien-match-price { font-size: 14px; color: #4FC3F7; font-weight: 600; }
+  .bien-match-sub { font-size: 11px; color: var(--text-muted); }
+
+  /* BIENS */
+  .bien-item {
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    gap: 12px;
+    cursor: pointer;
+    animation: fadeIn 0.3s ease;
+  }
+
+  .bien-thumb {
+    width: 56px;
+    height: 56px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #1E3A5F, #2E5A8F);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+  }
+
+  .bien-info { flex: 1; min-width: 0; }
+  .bien-title { font-size: 14px; color: #fff; font-weight: 500; margin-bottom: 3px; }
+  .bien-price { font-size: 15px; color: #4FC3F7; font-weight: 600; margin-bottom: 2px; }
+  .bien-sub { font-size: 12px; color: var(--text-muted); }
+
+  .filter-bar {
+    padding: 10px 16px;
+    background: var(--dark2);
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .filter-bar::-webkit-scrollbar { display: none; }
+
+  .filter-chip {
+    background: var(--dark3);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: var(--text-muted);
+    padding: 6px 14px;
+    border-radius: 16px;
+    font-size: 12px;
+    white-space: nowrap;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.2s;
+  }
+
+  .filter-chip.active {
+    background: rgba(79,195,247,0.15);
+    border-color: #4FC3F7;
+    color: #4FC3F7;
+  }
+
+  /* AGENDA */
+  .agenda-content { flex: 1; overflow-y: auto; padding: 16px; }
+  .agenda-content::-webkit-scrollbar { display: none; }
+
+  .month-header {
+    text-align: center;
+    color: #4FC3F7;
+    font-size: 16px;
+    font-weight: 500;
+    margin-bottom: 16px;
+    font-family: 'Google Sans', sans-serif;
+  }
+
+  .calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    margin-bottom: 24px;
+  }
+
+  .cal-day-header { text-align: center; font-size: 11px; color: #555; padding: 4px; }
+
+  .cal-day {
+    text-align: center;
+    padding: 8px 2px;
+    font-size: 13px;
+    color: #666;
+    cursor: pointer;
+    border-radius: 50%;
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    position: relative;
+  }
+
+  .cal-day.today {
+    background: #4FC3F7;
+    color: #000;
+    font-weight: 700;
+    border-radius: 50%;
+  }
+
+  .cal-day.has-event { color: #fff; }
+  .cal-day.has-event::after {
+    content: '';
+    position: absolute;
+    bottom: 2px;
+    width: 4px;
+    height: 4px;
+    background: #4FC3F7;
+    border-radius: 50%;
+  }
+
+  .rdv-item {
+    background: rgba(79,195,247,0.08);
+    border-left: 3px solid #4FC3F7;
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    animation: fadeIn 0.3s ease;
+  }
+
+  .rdv-time { font-size: 12px; color: #4FC3F7; margin-bottom: 4px; }
+  .rdv-title { font-size: 14px; color: #fff; font-weight: 500; }
+  .rdv-sub { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+
+  /* CALCULATRICE */
+  .calc-content { flex: 1; overflow-y: auto; padding: 16px; }
+  .calc-content::-webkit-scrollbar { display: none; }
+
+  .calc-section-title {
+    font-size: 13px;
+    color: #4FC3F7;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+    margin-top: 8px;
+  }
+
+  .calc-field { margin-bottom: 12px; }
+  .calc-label { font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
+
+  .calc-input {
+    background: var(--dark2);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: #fff;
+    font-size: 15px;
+    width: 100%;
+    font-family: 'Roboto', sans-serif;
+    outline: none;
+    transition: border 0.2s;
+  }
+
+  .calc-input:focus { border-color: rgba(79,195,247,0.5); }
+
+  .calc-result {
+    background: rgba(79,195,247,0.08);
+    border: 1px solid rgba(79,195,247,0.2);
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 16px;
+  }
+
+  .calc-result-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    font-size: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .calc-result-row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+  .calc-result-row span:first-child { color: var(--text-muted); }
+  .calc-result-row .result-value { color: #4FC3F7; font-weight: 600; font-size: 15px; }
+
+  .calc-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #4FC3F7, #1976D2);
+    border: none;
+    border-radius: 10px;
+    padding: 14px;
+    color: white;
+    font-size: 15px;
+    font-family: 'Google Sans', sans-serif;
+    font-weight: 500;
+    cursor: pointer;
+    margin-top: 16px;
+    transition: opacity 0.2s;
+  }
+
+  .calc-btn:active { opacity: 0.8; }
+
+  /* IA */
+  .ia-chat { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+  .ia-chat::-webkit-scrollbar { display: none; }
+
+  .ia-message { display: flex; gap: 8px; animation: fadeIn 0.3s ease; }
+  .ia-message.user { flex-direction: row-reverse; }
+
+  .ia-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .ia-avatar.ai { background: linear-gradient(135deg, var(--gold), #8B6914); }
+  .ia-avatar.user { background: #4FC3F7; color: #000; font-weight: 700; font-size: 11px; }
+
+  .ia-bubble {
+    max-width: 82%;
+    padding: 10px 14px;
+    border-radius: 16px;
+    font-size: 13px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+  }
+
+  .ia-bubble.ai {
+    background: #1E2D40;
+    border: 1px solid rgba(201,168,76,0.15);
+    border-top-left-radius: 4px;
+    color: #E0E0E0;
+  }
+
+  .ia-bubble.user {
+    background: #4FC3F7;
+    color: #000;
+    border-top-right-radius: 4px;
+    font-weight: 500;
+  }
+
+  .ia-suggestions {
+    padding: 6px 16px 8px;
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .ia-suggestions::-webkit-scrollbar { display: none; }
+
+  .ia-chip {
+    background: transparent;
+    border: 1px solid rgba(79,195,247,0.3);
+    color: #4FC3F7;
+    padding: 6px 12px;
+    border-radius: 16px;
+    font-size: 11px;
+    white-space: nowrap;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.2s;
+    font-family: 'Roboto', sans-serif;
+  }
+
+  .ia-chip:active { background: rgba(79,195,247,0.1); }
+
+  .ia-input-area {
+    padding: 10px 16px 16px;
+    background: #1a1f2e;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .ia-input {
+    flex: 1;
+    background: var(--dark3);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    padding: 10px 16px;
+    color: #fff;
+    font-size: 13px;
+    font-family: 'Roboto', sans-serif;
+    outline: none;
+  }
+
+  .ia-input::placeholder { color: #555; }
+  .ia-input:focus { border-color: rgba(79,195,247,0.4); }
+
+  .ia-send {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--gold), #8B6914);
+    border: none;
+    border-radius: 50%;
+    color: #000;
+    font-size: 15px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: transform 0.2s;
+  }
+
+  .ia-send:active { transform: scale(0.9); }
+
+  .typing-dots { display: flex; gap: 4px; padding: 4px 0; align-items: center; }
+  .dot { width: 6px; height: 6px; background: var(--gold); border-radius: 50%; animation: bounce 1.2s infinite; }
+  .dot:nth-child(2) { animation-delay: 0.2s; }
+  .dot:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes bounce {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+    30% { transform: translateY(-5px); opacity: 1; }
+  }
+
+  /* BOTTOM NAV */
+  .bottom-nav {
+    background: #1a1f2e;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    display: flex;
+    padding: 8px 0 20px;
+  }
+
+  .nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    cursor: pointer;
+    padding: 4px;
+    transition: all 0.2s;
+  }
+
+  .nav-icon { font-size: 20px; opacity: 0.45; transition: all 0.2s; }
+  .nav-label { font-size: 10px; color: #555; transition: all 0.2s; }
+
+  .nav-item.active .nav-icon { opacity: 1; }
+  .nav-item.active .nav-label { color: #4FC3F7; }
+  .nav-item.active.ia-nav .nav-label { color: var(--gold); }
+
+  /* FAB */
+  .fab {
+    position: fixed;
+    bottom: 90px;
+    right: 20px;
+    width: 52px;
+    height: 52px;
+    background: linear-gradient(135deg, #4FC3F7, #1976D2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(79,195,247,0.4);
+    z-index: 50;
+    transition: transform 0.2s;
+  }
+
+  .fab:active { transform: scale(0.92); }
+
+  /* EMPTY STATE */
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    gap: 12px;
+    color: var(--text-muted);
+    padding: 40px;
+    text-align: center;
+  }
+
+  .empty-icon { font-size: 48px; opacity: 0.4; }
+  .empty-text { font-size: 14px; }
+</style>
 </head>
-<body class="bg-gray-50 pb-20">
+<body>
 
-    <header class="bg-white shadow-sm p-4 sticky top-0 z-10 flex justify-between items-center">
-        <h1 class="font-bold text-xl text-blue-600">Assistant Immo 🏠</h1>
-        <div id="auth-container">
-            <div id="g_id_onload"
-                 data-client_id="196552745100-hpn388ci97s58rvhcel95ibbcum3c4rc.apps.googleusercontent.com"
-                 data-callback="handleCredentialResponse"
-                 data-auto_prompt="false">
-            </div>
-            <div class="g_id_signin" data-type="standard"></div>
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-logo">🏠</div>
+  <h1 class="login-title">Assistant Immo</h1>
+  <p class="login-sub">Votre secrétaire immobilière intelligente</p>
+  <button id="google-signin-btn" onclick="signIn()">
+    <svg class="google-icon" viewBox="0 0 24 24">
+      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+    </svg>
+    Connexion avec Google
+  </button>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="status-bar">
+    <span id="current-time">--:--</span>
+    <div style="display:flex;gap:6px;align-items:center;font-size:11px;">
+      <span>●●●●</span><span>📶</span><span>🔋</span>
+    </div>
+  </div>
+
+  <div class="app-header">
+    <div class="app-title" id="screen-title">Suivi client</div>
+    <div class="user-avatar" id="user-initial">J</div>
+  </div>
+
+  <!-- SUIVI -->
+  <div class="screen active" id="screen-suivi">
+    <div class="search-bar">
+      <input class="search-input" placeholder="🔍  Rechercher un client..." oninput="filterClients(this.value)"/>
+    </div>
+    <div class="list-container" id="clients-list">
+      <div class="loading"><div class="spinner"></div><span>Chargement...</span></div>
+    </div>
+    <div class="fab" onclick="alert('Ajouter un client — fonctionnalité à venir')">+</div>
+  </div>
+
+  <!-- AGENDA -->
+  <div class="screen" id="screen-agenda">
+    <div class="agenda-content" id="agenda-content">
+      <div class="loading"><div class="spinner"></div><span>Chargement...</span></div>
+    </div>
+  </div>
+
+  <!-- BIENS -->
+  <div class="screen" id="screen-biens">
+    <div class="filter-bar" id="filter-bar">
+      <div class="filter-chip active" onclick="filterBiens('Tous', this)">Tous</div>
+      <div class="filter-chip" onclick="filterBiens('Maison', this)">Maison</div>
+      <div class="filter-chip" onclick="filterBiens('Appartement', this)">Appartement</div>
+      <div class="filter-chip" onclick="filterBiens('Terrain', this)">Terrain</div>
+      <div class="filter-chip" onclick="filterBiens('Local', this)">Local</div>
+    </div>
+    <div class="list-container" id="biens-list">
+      <div class="loading"><div class="spinner"></div><span>Chargement...</span></div>
+    </div>
+  </div>
+
+  <!-- CALCULATRICE -->
+  <div class="screen" id="screen-calc">
+    <div class="calc-content">
+      <div class="calc-section-title">Simulation de rendement</div>
+      <div class="calc-field">
+        <div class="calc-label">Prix d'achat (€)</div>
+        <input class="calc-input" id="c-prix" type="number" placeholder="75000" oninput="calcRender()"/>
+      </div>
+      <div class="calc-field">
+        <div class="calc-label">Travaux (€)</div>
+        <input class="calc-input" id="c-travaux" type="number" placeholder="0" oninput="calcRender()"/>
+      </div>
+      <div class="calc-field">
+        <div class="calc-label">Frais de notaire (€)</div>
+        <input class="calc-input" id="c-notaire" type="number" placeholder="5000" oninput="calcRender()"/>
+      </div>
+      <div class="calc-field">
+        <div class="calc-label">Loyer mensuel HC (€)</div>
+        <input class="calc-input" id="c-loyer" type="number" placeholder="550" oninput="calcRender()"/>
+      </div>
+      <div class="calc-field">
+        <div class="calc-label">Taxe foncière annuelle (€)</div>
+        <input class="calc-input" id="c-taxe" type="number" placeholder="800" oninput="calcRender()"/>
+      </div>
+      <div class="calc-result" id="calc-result" style="display:none">
+        <div class="calc-result-row">
+          <span>Rendement brut</span>
+          <span class="result-value" id="r-brut">—</span>
         </div>
-        <button id="logout-btn" onclick="logout()" class="hidden text-sm text-red-500">Déconnexion</button>
-    </header>
-
-    <main class="p-4">
-        <div id="welcome-msg" class="text-center my-10">
-            <p class="text-gray-500">Veuillez vous connecter pour accéder aux données.</p>
+        <div class="calc-result-row">
+          <span>Rendement net</span>
+          <span class="result-value" id="r-net">—</span>
         </div>
-
-        <div id="tab-ia" class="tab-content">
-            <div class="bg-white rounded-xl shadow-md p-4 mb-4 h-96 flex flex-col">
-                <div id="chat-box" class="flex-1 overflow-y-auto mb-4 space-y-3">
-                    <p class="bg-blue-100 p-3 rounded-lg text-sm">Bonjour Jade ! Pose-moi une question sur tes clients ou tes biens.</p>
-                </div>
-                <div class="flex gap-2">
-                    <input id="ia-input" type="text" placeholder="Qui relancer ?" class="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <button onclick="askGemini()" class="bg-blue-600 text-white px-4 py-2 rounded-lg"><i class="fas fa-paper-plane"></i></button>
-                </div>
-            </div>
+        <div class="calc-result-row">
+          <span>Revenus annuels</span>
+          <span class="result-value" id="r-annuel">—</span>
         </div>
-
-        <div id="tab-clients" class="tab-content">
-            <h2 class="font-bold mb-4">Clients en cours</h2>
-            <div id="clients-list" class="space-y-3 text-sm">
-                </div>
+        <div class="calc-result-row">
+          <span>Investissement total</span>
+          <span class="result-value" id="r-total">—</span>
         </div>
+      </div>
+      <button class="calc-btn" onclick="calcRender()">Calculer</button>
+    </div>
+  </div>
 
-        <div id="tab-biens" class="tab-content">
-            <h2 class="font-bold mb-4">Listing des Biens</h2>
-            <div id="biens-list" class="grid grid-cols-1 gap-4">
-                </div>
-        </div>
-    </main>
+  <!-- IA -->
+  <div class="screen" id="screen-ia">
+    <div class="ia-chat" id="ia-chat"></div>
+    <div class="ia-suggestions">
+      <div class="ia-chip" onclick="iaSend(this.innerText)">Clients en cours ?</div>
+      <div class="ia-chip" onclick="iaSend(this.innerText)">Biens &lt; 100K€ ?</div>
+      <div class="ia-chip" onclick="iaSend(this.innerText)">Qui relancer ?</div>
+      <div class="ia-chip" onclick="iaSend(this.innerText)">RDV à venir ?</div>
+      <div class="ia-chip" onclick="iaSend(this.innerText)">Résumé du jour</div>
+    </div>
+    <div class="ia-input-area">
+      <input class="ia-input" id="ia-input" placeholder="Posez votre question..."
+        onkeydown="if(event.key==='Enter') iaSend(document.getElementById('ia-input').value)"/>
+      <button class="ia-send" onclick="iaSend(document.getElementById('ia-input').value)">➤</button>
+    </div>
+  </div>
 
-    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t flex justify-around p-2 text-gray-500">
-        <button onclick="showTab('clients')" class="flex flex-col items-center p-2 tab-btn" id="btn-clients">
-            <i class="fas fa-users text-xl"></i><span class="text-xs">Suivi</span>
-        </button>
-        <button onclick="showTab('biens')" class="flex flex-col items-center p-2 tab-btn" id="btn-biens">
-            <i class="fas fa-home text-xl"></i><span class="text-xs">Biens</span>
-        </button>
-        <button onclick="showTab('ia')" class="flex flex-col items-center p-2 tab-btn active-tab" id="btn-ia">
-            <i class="fas fa-robot text-xl"></i><span class="text-xs">Assistant IA</span>
-        </button>
-    </nav>
+  <!-- BOTTOM NAV -->
+  <div class="bottom-nav">
+    <div class="nav-item active" id="nav-suivi" onclick="switchScreen('suivi')">
+      <div class="nav-icon">👥</div>
+      <div class="nav-label">Suivi</div>
+    </div>
+    <div class="nav-item" id="nav-agenda" onclick="switchScreen('agenda')">
+      <div class="nav-icon">📅</div>
+      <div class="nav-label">Agenda</div>
+    </div>
+    <div class="nav-item" id="nav-biens" onclick="switchScreen('biens')">
+      <div class="nav-icon">🏠</div>
+      <div class="nav-label">Biens</div>
+    </div>
+    <div class="nav-item" id="nav-calc" onclick="switchScreen('calc')">
+      <div class="nav-icon">🧮</div>
+      <div class="nav-label">Calcul</div>
+    </div>
+    <div class="nav-item ia-nav" id="nav-ia" onclick="switchScreen('ia')">
+      <div class="nav-icon">🤖</div>
+      <div class="nav-label">IA</div>
+    </div>
+  </div>
+</div>
 
-    <script>
-        const SPREADSHEET_ID = '1E8GasroeMO871PpvOC9XKBxjd0W-m97Xp0DoyWw16J4';
-        const GEMINI_KEY = 'AIzaSyCIIpjACdkqS8qb7eBVC_mngYQsFWm2jp4';
-        let accessToken = null;
-        let userData = { clients: [], biens: [] };
+<!-- CLIENT DETAIL -->
+<div id="client-detail">
+  <div class="detail-header">
+    <button class="back-btn" onclick="closeDetail()">←</button>
+    <div>
+      <div style="font-size:16px;font-weight:600" id="detail-name">—</div>
+      <div style="font-size:12px;color:#888" id="detail-status">—</div>
+    </div>
+  </div>
+  <div class="detail-content">
+    <div class="action-buttons">
+      <button class="action-btn btn-call" id="btn-call" onclick="callClient()">
+        <span class="btn-icon">📞</span>Appeler
+      </button>
+      <button class="action-btn btn-sms" id="btn-sms" onclick="smsClient()">
+        <span class="btn-icon">💬</span>SMS
+      </button>
+      <button class="action-btn btn-mail" id="btn-mail" onclick="mailClient()">
+        <span class="btn-icon">✉️</span>Email
+      </button>
+      <button class="action-btn btn-relance" onclick="relanceClient()">
+        <span class="btn-icon">🔔</span>J+7
+      </button>
+    </div>
+    <div class="detail-card">
+      <h3>Informations</h3>
+      <div id="detail-info"></div>
+    </div>
+    <div class="detail-card" id="biens-match-card">
+      <h3>Biens correspondants</h3>
+      <div id="biens-match-list"></div>
+    </div>
+  </div>
+</div>
 
-        function handleCredentialResponse(response) {
-            // Dans une vraie PWA, on demanderait le token d'accès ici
-            // Pour simplifier l'accès au Sheets sans backend complexe :
-            google.accounts.oauth2.initTokenClient({
-                client_id: '196552745100-hpn388ci97s58rvhcel95ibbcum3c4rc.apps.googleusercontent.com',
-                scope: 'https://www.googleapis.com/auth/spreadsheets.readonly',
-                callback: (tokenResponse) => {
-                    accessToken = tokenResponse.access_token;
-                    document.getElementById('auth-container').classList.add('hidden');
-                    document.getElementById('logout-btn').classList.remove('hidden');
-                    document.getElementById('welcome-msg').classList.add('hidden');
-                    loadData();
-                },
-            }).requestAccessToken();
-        }
+<script>
+// ═══════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════
+const CONFIG = {
+  CLIENT_ID: '196552745100-ao818vidhm7f8iev7uhf9haifd0as2pu.apps.googleusercontent.com',
+  SHEET_ID: '1E8GasroeMO871PpvOC9XKBxjd0W-m97Xp0DoyWw16J4',
+  GEMINI_KEY: AIzaSyDWUJUR4jWExQtq8zggWvzpUOZM5Q2kNLE, // ← Remplacez après régénération
+  SCOPES: 'https://www.googleapis.com/auth/spreadsheets.readonly'
+};
 
-        async function loadData() {
-            try {
-                // Charger Clients (Onglet Suivi)
-                const resClients = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/Suivi!A:M`, {
-                    headers: { Authorization: `Bearer ${accessToken}` }
-                });
-                const dataClients = await resClients.json();
-                userData.clients = dataClients.values;
-                renderClients();
+let accessToken = null;
+let allClients = [];
+let allBiens = [];
+let allRDV = [];
+let currentClient = null;
 
-                // Charger Biens
-                const resBiens = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/Biens!A:L`, {
-                    headers: { Authorization: `Bearer ${accessToken}` }
-                });
-                const dataBiens = await resBiens.json();
-                userData.biens = dataBiens.values;
-                renderBiens();
-            } catch (err) {
-                console.error("Erreur chargement :", err);
-            }
-        }
-
-        function renderClients() {
-            const container = document.getElementById('clients-list');
-            container.innerHTML = userData.clients.slice(1).map(row => `
-                <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-blue-500">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <p class="font-bold">${row[0] || 'Nom inconnu'}</p>
-                            <p class="text-gray-500 text-xs">${row[1] || ''} - ${row[3] || ''}k€</p>
-                        </div>
-                        <a href="tel:${row[6]}" class="text-green-500"><i class="fas fa-phone"></i></a>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function renderBiens() {
-            const container = document.getElementById('biens-list');
-            container.innerHTML = userData.biens.slice(1).map(row => `
-                <div class="bg-white p-3 rounded-xl shadow-sm flex gap-3">
-                    <div class="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center text-gray-400">
-                        <i class="fas fa-camera text-2xl"></i>
-                    </div>
-                    <div class="flex-1">
-                        <p class="font-bold text-sm">${row[1] || 'Bien'}</p>
-                        <p class="text-blue-600 font-bold">${row[3] || '0'} €</p>
-                        <p class="text-gray-500 text-xs">${row[2] || ''}</p>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function showTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active-tab'));
-            document.getElementById(`tab-${tabId}`).classList.add('active');
-            document.getElementById(`btn-${tabId}`).classList.add('active-tab');
-        }
-
-        async function askGemini() {
-    const input = document.getElementById('ia-input');
-    const chatBox = document.getElementById('chat-box');
-    if (!input.value) return;
-
-    const userMsg = input.value;
-    chatBox.innerHTML += `<p class="bg-gray-200 p-3 rounded-lg text-sm self-end text-right ml-10">${userMsg}</p>`;
-    input.value = '';
-
-    // Préparation du contexte (On envoie les 10 premiers clients et biens pour l'aider)
-    const context = `Tu es l'assistant de Jade, agent immobilier. Voici ses données : 
-    Clients : ${JSON.stringify(userData.clients ? userData.clients.slice(0,10) : [])}. 
-    Biens : ${JSON.stringify(userData.biens ? userData.biens.slice(0,10) : [])}. 
-    Réponds brièvement en français à la question : ${userMsg}`;
-
-    try {
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts: [{ text: context }] }] })
-        });
-        
-        const data = await res.json();
-        
-        // Vérification de sécurité pour éviter l'erreur "reading 0"
-        if (data && data.candidates && data.candidates[0] && data.candidates[0].content) {
-            const aiResp = data.candidates[0].content.parts[0].text;
-            chatBox.innerHTML += `<p class="bg-blue-100 p-3 rounded-lg text-sm mr-10">${aiResp}</p>`;
-        } else {
-            chatBox.innerHTML += `<p class="text-orange-500 text-xs">L'IA n'a pas pu répondre (Vérifiez les quotas ou la sécurité).</p>`;
-            console.log("Détail erreur Google :", data);
-        }
-        
-        chatBox.scrollTop = chatBox.scrollHeight;
-    } catch (err) {
-        chatBox.innerHTML += `<p class="text-red-500 text-xs">Erreur technique : ${err.message}</p>`;
+// ═══════════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════════
+function signIn() {
+  const client = google.accounts.oauth2.initTokenClient({
+    client_id: CONFIG.CLIENT_ID,
+    scope: CONFIG.SCOPES,
+    callback: (response) => {
+      if (response.access_token) {
+        accessToken = response.access_token;
+        showApp();
+        loadAllData();
+      }
     }
+  });
+  client.requestAccessToken();
 }
 
-        function logout() { location.reload(); }
+function showApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').classList.add('visible');
+  updateTime();
+  setInterval(updateTime, 30000);
+  iaAddMessage('Bonjour Jade ! 👋\n\nJe suis votre assistante IA. Je connais vos clients, biens et agenda.\n\nComment puis-je vous aider ?', 'ai');
+}
 
-        // Onglet par défaut
-        showTab('ia');
-    </script>
+function updateTime() {
+  const now = new Date();
+  document.getElementById('current-time').textContent =
+    now.getHours().toString().padStart(2,'0') + ':' +
+    now.getMinutes().toString().padStart(2,'0');
+}
+
+// ═══════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════
+async function fetchSheet(range) {
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/${range}`;
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${accessToken}` }
+  });
+  const data = await res.json();
+  return data.values || [];
+}
+
+async function loadAllData() {
+  try {
+    const [clients, biens, rdv] = await Promise.all([
+      fetchSheet('Suivi!A:L'),
+      fetchSheet('Biens!A:J'),
+      fetchSheet('Cal.com!A:I')
+    ]);
+
+    // Parse clients
+    allClients = clients.slice(1).filter(r => r[0] && r[0].trim()).map(r => ({
+      nom: r[0] || '',
+      type: r[1] || '',
+      chambres: r[2] || '',
+      budget: r[3] || '',
+      localisation: r[4] || '',
+      telephone: r[5] || '',
+      mail: r[6] || '',
+      notes: r[7] || '',
+      biensProposes: r[8] || '',
+      suivi: r[9] || '',
+      dateDerniereRelance: r[10] || '',
+      dateProchaine: r[11] || '',
+    }));
+
+    // Parse biens
+    allBiens = biens.slice(1).filter(r => r[0]).map(r => ({
+      id: r[0] || '',
+      type: r[1] || '',
+      ville: r[2] || '',
+      prix: parseFloat((r[3] || '0').replace(/[^0-9.]/g, '')) || 0,
+      surface: r[4] || '',
+      pieces: r[5] || '',
+      chambres: parseInt(r[6]) || 0,
+      prixM2: r[7] || '',
+      lien: r[8] || '',
+      etat: r[9] || '',
+    }));
+
+    // Parse RDV
+    allRDV = rdv.slice(1).filter(r => r[1]).map(r => ({
+      id: r[0] || '',
+      date: r[1] || '',
+      type: r[2] || '',
+      nom: r[3] || '',
+      email: r[4] || '',
+      telephone: r[5] || '',
+      bien: r[6] || '',
+      statut: r[7] || '',
+    }));
+
+    renderClients(allClients);
+    renderBiens(allBiens);
+    renderAgenda(allRDV);
+
+  } catch(e) {
+    console.error('Erreur chargement:', e);
+  }
+}
+
+// ═══════════════════════════════════════════
+// CLIENTS
+// ═══════════════════════════════════════════
+function renderClients(clients) {
+  const container = document.getElementById('clients-list');
+  if (!clients.length) {
+    container.innerHTML = '<div class="empty-state"><div class="empty-icon">👥</div><div class="empty-text">Aucun client trouvé</div></div>';
+    return;
+  }
+
+  container.innerHTML = clients.map((c, i) => `
+    <div class="client-item" onclick="openClient(${i})">
+      <div class="client-avatar">${getInitials(c.nom)}</div>
+      <div class="client-info">
+        <div class="client-name">${c.nom}</div>
+        <div class="client-sub">${c.type || '—'} • ${c.budget ? c.budget + 'K€' : '—'} • ${c.localisation || '—'}</div>
+      </div>
+      <div class="badge ${getBadgeClass(c.suivi)}">${c.suivi || '—'}</div>
+    </div>
+  `).join('');
+}
+
+function filterClients(q) {
+  const filtered = allClients.filter(c =>
+    c.nom.toLowerCase().includes(q.toLowerCase()) ||
+    c.type.toLowerCase().includes(q.toLowerCase()) ||
+    (c.localisation || '').toLowerCase().includes(q.toLowerCase())
+  );
+  renderClients(filtered);
+}
+
+function getInitials(name) {
+  return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+}
+
+function getBadgeClass(suivi) {
+  if (!suivi) return 'badge badge-default';
+  const s = suivi.toLowerCase();
+  if (s.includes('cours')) return 'badge badge-cours';
+  if (s.includes('compro')) return 'badge badge-compromis';
+  if (s.includes('vendu')) return 'badge badge-vendu';
+  return 'badge badge-default';
+}
+
+function openClient(idx) {
+  currentClient = allClients[idx];
+  const c = currentClient;
+
+  document.getElementById('detail-name').textContent = c.nom;
+  document.getElementById('detail-status').textContent = c.suivi || '—';
+
+  document.getElementById('detail-info').innerHTML = `
+    <div class="detail-row"><span>Type</span><span>${c.type || '—'}</span></div>
+    <div class="detail-row"><span>Budget</span><span>${c.budget ? c.budget + ' 000 €' : '—'}</span></div>
+    <div class="detail-row"><span>Localisation</span><span>${c.localisation || '—'}</span></div>
+    <div class="detail-row"><span>Chambres</span><span>${c.chambres || '—'}</span></div>
+    <div class="detail-row"><span>Téléphone</span><span>${c.telephone || '—'}</span></div>
+    <div class="detail-row"><span>Email</span><span>${c.mail || '—'}</span></div>
+    <div class="detail-row"><span>Notes</span><span>${c.notes || '—'}</span></div>
+    <div class="detail-row"><span>Prochaine relance</span><span>${c.dateProchaine || '—'}</span></div>
+  `;
+
+  // Matching biens
+  const budget = parseFloat(c.budget) * 1000 || Infinity;
+  const chambres = parseInt(c.chambres) || 0;
+  const matching = allBiens.filter(b =>
+    (!c.type || b.type.toLowerCase().includes(c.type.toLowerCase())) &&
+    (b.prix <= budget) &&
+    (chambres === 0 || b.chambres >= chambres)
+  ).slice(0, 5);
+
+  const matchList = document.getElementById('biens-match-list');
+  if (matching.length) {
+    matchList.innerHTML = matching.map(b => `
+      <div class="bien-match-item">
+        <div class="bien-match-icon">${b.type === 'Maison' ? '🏠' : b.type === 'Appartement' ? '🏢' : '🏗️'}</div>
+        <div class="bien-match-info">
+          <div class="bien-match-title">${b.type} — ${b.ville}</div>
+          <div class="bien-match-price">${b.prix.toLocaleString('fr-FR')} €</div>
+          <div class="bien-match-sub">${b.surface || '—'} • ${b.chambres || '—'} ch • Réf. ${b.id}</div>
+        </div>
+        ${b.lien ? `<a href="${b.lien}" target="_blank" style="color:#4FC3F7;font-size:18px;text-decoration:none">🔗</a>` : ''}
+      </div>
+    `).join('');
+  } else {
+    matchList.innerHTML = '<div style="color:#888;font-size:13px;text-align:center;padding:12px">Aucun bien correspondant</div>';
+  }
+
+  document.getElementById('client-detail').classList.add('open');
+}
+
+function closeDetail() {
+  document.getElementById('client-detail').classList.remove('open');
+}
+
+function callClient() {
+  if (currentClient?.telephone) window.location.href = `tel:${currentClient.telephone}`;
+}
+
+function smsClient() {
+  if (currentClient?.telephone) window.location.href = `sms:${currentClient.telephone}`;
+}
+
+function mailClient() {
+  if (currentClient?.mail) window.location.href = `mailto:${currentClient.mail}`;
+}
+
+function relanceClient() {
+  const date = new Date();
+  date.setDate(date.getDate() + 7);
+  alert(`Relance J+7 programmée pour le ${date.toLocaleDateString('fr-FR')}\n\n(Mise à jour du Google Sheets à venir)`);
+}
+
+// ═══════════════════════════════════════════
+// BIENS
+// ═══════════════════════════════════════════
+function renderBiens(biens) {
+  const container = document.getElementById('biens-list');
+  if (!biens.length) {
+    container.innerHTML = '<div class="empty-state"><div class="empty-icon">🏠</div><div class="empty-text">Aucun bien trouvé</div></div>';
+    return;
+  }
+
+  container.innerHTML = biens.map(b => `
+    <div class="bien-item" ${b.lien ? `onclick="window.open('${b.lien}','_blank')"` : ''}>
+      <div class="bien-thumb">${b.type === 'Maison' ? '🏠' : b.type === 'Appartement' ? '🏢' : b.type === 'Terrain' ? '🌿' : '🏗️'}</div>
+      <div class="bien-info">
+        <div class="bien-title">${b.type} — ${b.ville}</div>
+        <div class="bien-price">${b.prix.toLocaleString('fr-FR')} €</div>
+        <div class="bien-sub">${b.surface || '—'} • ${b.chambres ? b.chambres + ' ch' : '—'} • Réf. ${b.id}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function filterBiens(type, el) {
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  const filtered = type === 'Tous' ? allBiens : allBiens.filter(b => b.type === type);
+  renderBiens(filtered);
+}
+
+// ═══════════════════════════════════════════
+// AGENDA
+// ═══════════════════════════════════════════
+function renderAgenda(rdvs) {
+  const container = document.getElementById('agenda-content');
+  const now = new Date();
+  const upcoming = rdvs
+    .filter(r => r.statut !== 'CANCELLED' && new Date(r.date) >= now)
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  const monthName = now.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+
+  let html = `<div class="month-header">${monthName.charAt(0).toUpperCase() + monthName.slice(1)}</div>`;
+
+  if (upcoming.length === 0) {
+    html += '<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-text">Aucun RDV à venir</div></div>';
+  } else {
+    html += upcoming.map(r => {
+      const d = new Date(r.date);
+      const dateStr = d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+      const timeStr = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+      return `
+        <div class="rdv-item">
+          <div class="rdv-time">📅 ${dateStr} à ${timeStr}</div>
+          <div class="rdv-title">${r.type || 'RDV'}</div>
+          <div class="rdv-sub">${r.nom || '—'}${r.telephone ? ' • ' + r.telephone : ''}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  container.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════
+// CALCULATRICE
+// ═══════════════════════════════════════════
+function calcRender() {
+  const prix = parseFloat(document.getElementById('c-prix').value) || 0;
+  const travaux = parseFloat(document.getElementById('c-travaux').value) || 0;
+  const notaire = parseFloat(document.getElementById('c-notaire').value) || 0;
+  const loyer = parseFloat(document.getElementById('c-loyer').value) || 0;
+  const taxe = parseFloat(document.getElementById('c-taxe').value) || 0;
+
+  if (!prix || !loyer) return;
+
+  const total = prix + travaux + notaire;
+  const revenuBrut = loyer * 12;
+  const rendBrut = (revenuBrut / prix * 100).toFixed(2);
+  const rendNet = ((revenuBrut - taxe) / total * 100).toFixed(2);
+
+  document.getElementById('r-brut').textContent = rendBrut + ' %';
+  document.getElementById('r-net').textContent = rendNet + ' %';
+  document.getElementById('r-annuel').textContent = revenuBrut.toLocaleString('fr-FR') + ' €';
+  document.getElementById('r-total').textContent = total.toLocaleString('fr-FR') + ' €';
+  document.getElementById('calc-result').style.display = 'block';
+}
+
+// ═══════════════════════════════════════════
+// ASSISTANT IA
+// ═══════════════════════════════════════════
+function iaAddMessage(text, type) {
+  const chat = document.getElementById('ia-chat');
+  const msg = document.createElement('div');
+  msg.className = `ia-message ${type}`;
+  msg.innerHTML = `
+    <div class="ia-avatar ${type}">${type === 'ai' ? '✦' : 'J'}</div>
+    <div class="ia-bubble ${type}">${text.replace(/\n/g, '<br>')}</div>
+  `;
+  chat.appendChild(msg);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+async function iaSend(text) {
+  if (!text.trim()) return;
+  document.getElementById('ia-input').value = '';
+  iaAddMessage(text, 'user');
+
+  const typingMsg = document.createElement('div');
+  typingMsg.className = 'ia-message';
+  typingMsg.id = 'typing';
+  typingMsg.innerHTML = `<div class="ia-avatar ai">✦</div><div class="ia-bubble ai"><div class="typing-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>`;
+  document.getElementById('ia-chat').appendChild(typingMsg);
+  document.getElementById('ia-chat').scrollTop = 99999;
+
+  const today = new Date().toLocaleDateString('fr-FR');
+  const clientsData = allClients.map(c => `${c.nom} | ${c.type} | ${c.budget}K€ | ${c.localisation} | ${c.telephone} | ${c.suivi} | relance: ${c.dateProchaine}`).join('\n');
+  const biensData = allBiens.slice(0, 30).map(b => `Réf.${b.id} | ${b.type} | ${b.prix}€ | ${b.ville} | ${b.chambres}ch`).join('\n');
+  const rdvData = allRDV.slice(0, 10).map(r => `${r.date} | ${r.type} | ${r.nom} | ${r.statut}`).join('\n');
+
+  const prompt = `Tu es l'assistante IA de Jade, agent immobilière. Aujourd'hui : ${today}.
+
+CLIENTS:
+${clientsData || 'Aucun client'}
+
+BIENS (extrait):
+${biensData || 'Aucun bien'}
+
+RDV:
+${rdvData || 'Aucun RDV'}
+
+Réponds en français, de façon concise et professionnelle. Maximum 150 mots.
+Question: ${text}`;
+
+  try {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${CONFIG.GEMINI_KEY}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+    });
+    const data = await res.json();
+    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "Désolée, je n'ai pas pu répondre.";
+    document.getElementById('typing')?.remove();
+    iaAddMessage(reply, 'ai');
+  } catch(e) {
+    document.getElementById('typing')?.remove();
+    iaAddMessage("❌ Erreur de connexion à l'IA.", 'ai');
+  }
+}
+
+// ═══════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════
+const screenTitles = {
+  suivi: 'Suivi client',
+  agenda: 'Agenda',
+  biens: 'Biens',
+  calc: 'Calculatrice',
+  ia: '🤖 Assistant IA'
+};
+
+function switchScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  document.getElementById('nav-' + name).classList.add('active');
+  document.getElementById('screen-title').textContent = screenTitles[name];
+  document.querySelector('.fab') && (document.querySelector('.fab').style.display = name === 'suivi' ? 'flex' : 'none');
+}
+
+updateTime();
+</script>
 </body>
 </html>
