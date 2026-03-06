@@ -966,6 +966,7 @@ function showApp() {
   updateTime();
   setInterval(updateTime, 30000);
   iaAddMessage('Bonjour Jade ! 👋\n\nJe suis votre assistante IA. Je connais vos clients, biens et agenda.\n\nComment puis-je vous aider ?', 'ai');
+  setTimeout(() => loadAllData(), 1000);
 }
 
 function updateTime() {
